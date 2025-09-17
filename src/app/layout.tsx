@@ -1,8 +1,8 @@
 import "./styles/globals.css";
-
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Nunito_Sans } from "next/font/google";
+import type { ReactNode } from "react";
 
 // ✅ Premium & Professional Font
 const nunito = Nunito_Sans({
@@ -10,7 +10,7 @@ const nunito = Nunito_Sans({
   weight: ["400", "600", "700"], // Regular, Semi-bold, Bold
 });
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className={`${nunito.className} flex flex-col min-h-screen`}>
