@@ -5,7 +5,6 @@ export async function POST(request) {
   try {
     const { username, password } = await request.json();
 
-    // Server-side secrets from env (only available on server)
     const ADMIN_USER = process.env.ADMIN_USER;
     const ADMIN_PASS = process.env.ADMIN_PASS;
 
@@ -17,7 +16,7 @@ export async function POST(request) {
     }
 
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-      // Simple success response; you could sign JWT here if you want
+      // Success: return token
       return NextResponse.json({ ok: true, token: "admin-authtoken" });
     } else {
       return NextResponse.json(
