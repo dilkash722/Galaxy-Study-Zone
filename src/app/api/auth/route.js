@@ -16,7 +16,7 @@ export async function POST(request) {
     }
 
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-      // Success: return token
+      // Successful login, return token
       return NextResponse.json({ ok: true, token: "admin-authtoken" });
     } else {
       return NextResponse.json(
