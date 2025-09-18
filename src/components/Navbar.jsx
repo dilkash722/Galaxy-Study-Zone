@@ -1,7 +1,9 @@
+// components/Navbar.jsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { isLoggedIn, loginAdmin, logoutAdmin } from "../lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,83 +15,93 @@ export default function Navbar() {
   });
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => setLoggedIn(isLoggedIn()), []);
+  useEffect(() => {
+    const ok = isLoggedIn();
+    setLoggedIn(ok);
+    // if not logged in, force show modal on load
+    if (!ok) setShowLoginModal(true);
+  }, []);
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
-
-  const handleLoginSubmit = () => {
-    if (credentials.username === "dilkash" && credentials.password === "1524") {
-      loginAdmin();
-      setLoggedIn(true);
-      setShowLoginModal(false);
-      setShowSuccessPopup(true);
-      setCredentials({ username: "", password: "" });
-      setTimeout(() => setShowSuccessPopup(false), 2000);
-    } else {
+  const handleLoginSubmit = async () => {
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        loginAdmin(data.token);
+        setLoggedIn(true);
+        setShowLoginModal(false);
+        setShowSuccessPopup(true);
+        setCredentials({ username: "", password: "" });
+        setTimeout(() => setShowSuccessPopup(false), 1500);
+      } else {
+        setShowErrorPopup(true);
+        setTimeout(() => setShowErrorPopup(false), 1500);
+      }
+    } catch (err) {
       setShowErrorPopup(true);
-      setTimeout(() => setShowErrorPopup(false), 2000);
+      setTimeout(() => setShowErrorPopup(false), 1500);
     }
   };
 
   const handleLogout = () => {
     logoutAdmin();
     setLoggedIn(false);
+    setShowLoginModal(true);
+    // redirect to home/root so protected pages are closed
+    router.push("/");
   };
 
-  const publicLinks = [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-    { name: "View Students", href: "/view-students" },
-  ];
-
   const privateLinks = [
+    { name: "Dashboard", href: "/dashboard" },
     { name: "Admission", href: "/admission" },
     { name: "Payment", href: "/payment" },
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 fixed w-full z-50 shadow-md text-white overflow-x-hidden">
-      <div className="w-full flex justify-between items-center h-16 px-4 md:px-8">
-        {/* Logo */}
-        <div className="text-2xl font-bold">Galaxy Study Zone</div>
+    <nav className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 fixed w-full z-50 shadow-lg text-white">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 flex justify-between items-center h-20">
+        {/* Logo + Tagline */}
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold tracking-wide">
+            Galaxy Study Zone
+          </span>
+          <span className="text-sm italic text-yellow-200">
+            “Jahan Har Bachha Ek Taara Hai”
+          </span>
+        </div>
 
         {/* Desktop Links */}
         <div className="hidden md:flex space-x-6 items-center">
-          {publicLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className="hover:text-yellow-300 transition-colors font-medium"
-            >
-              {link.name}
-            </a>
-          ))}
-
           {loggedIn &&
             privateLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className="hover:text-yellow-300 transition-colors font-medium"
+                className="hover:text-yellow-300 transition-colors font-medium text-lg"
               >
                 {link.name}
               </a>
             ))}
 
-          {!loggedIn ? (
+          {loggedIn ? (
             <button
-              onClick={() => setShowLoginModal(true)}
-              className="ml-4 px-3 py-1.5 bg-gradient-to-r from-blue-400 to-blue-600 rounded-xl hover:from-blue-600 hover:to-blue-700 shadow text-white font-semibold transition"
+              onClick={handleLogout}
+              className="ml-4 px-4 py-2 bg-red-500 rounded-xl hover:bg-red-600 shadow transition font-semibold"
             >
-              Login
+              Logout
             </button>
           ) : (
             <button
-              onClick={handleLogout}
-              className="ml-4 px-3 py-1.5 bg-gradient-to-r from-red-400 to-red-600 rounded-xl hover:from-red-600 hover:to-red-700 shadow text-white font-semibold transition"
+              onClick={() => setShowLoginModal(true)}
+              className="ml-4 px-4 py-2 bg-blue-500 rounded-xl hover:bg-blue-600 shadow transition font-semibold"
             >
-              Logout
+              Login
             </button>
           )}
         </div>
@@ -97,55 +109,45 @@ export default function Navbar() {
         {/* Mobile Menu Button */}
         <div className="md:hidden">
           <button
-            onClick={toggleMenu}
-            className="text-white text-2xl focus:outline-none"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="text-white text-3xl focus:outline-none"
           >
-            {menuOpen ? "\u2715" : "\u2630"}
+            {menuOpen ? "✕" : "☰"}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 px-2 pt-2 pb-4 space-y-1 shadow-lg">
-          {publicLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="block px-3 py-2 rounded hover:bg-blue-700 transition-colors font-medium text-white"
-            >
-              {link.name}
-            </a>
-          ))}
+        <div className="md:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-4 pt-2 pb-4 space-y-2 shadow-lg">
           {loggedIn &&
             privateLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="block px-3 py-2 rounded hover:bg-blue-700 transition-colors font-medium text-white"
+                className="block px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors text-white font-medium"
               >
                 {link.name}
               </a>
             ))}
 
-          {!loggedIn ? (
+          {loggedIn ? (
+            <button
+              onClick={handleLogout}
+              className="w-full px-3 py-2 bg-red-500 rounded-xl hover:bg-red-600 shadow text-white font-semibold transition"
+            >
+              Logout
+            </button>
+          ) : (
             <button
               onClick={() => {
                 setShowLoginModal(true);
                 setMenuOpen(false);
               }}
-              className="w-full px-3 py-2 bg-gradient-to-r from-blue-400 to-blue-600 rounded-xl hover:from-blue-600 hover:to-blue-700 shadow text-white font-semibold transition"
+              className="w-full px-3 py-2 bg-blue-500 rounded-xl hover:bg-blue-600 shadow text-white font-semibold transition"
             >
               Login
-            </button>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="w-full px-3 py-2 bg-gradient-to-r from-red-400 to-red-600 rounded-xl hover:from-red-600 hover:to-red-700 shadow text-white font-semibold transition"
-            >
-              Logout
             </button>
           )}
         </div>
@@ -153,14 +155,15 @@ export default function Navbar() {
 
       {/* Login Modal */}
       {showLoginModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm">
-          <div className="bg-gray-100 p-8 rounded-2xl shadow-2xl w-96 relative animate-fadeIn">
-            <h2 className="text-2xl font-semibold mb-6 text-gray-900 text-center">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-3xl shadow-2xl w-96">
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">
               Admin Login
             </h2>
+
             <div className="space-y-4">
-              <div className="flex flex-col">
-                <label className="mb-1 font-medium text-gray-700">
+              <div>
+                <label className="font-medium text-gray-700 mb-1 block">
                   Username
                 </label>
                 <input
@@ -168,13 +171,16 @@ export default function Navbar() {
                   placeholder="Username"
                   value={credentials.username}
                   onChange={(e) =>
-                    setCredentials({ ...credentials, username: e.target.value })
+                    setCredentials((prev) => ({
+                      ...prev,
+                      username: e.target.value,
+                    }))
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-400"
                 />
               </div>
-              <div className="flex flex-col">
-                <label className="mb-1 font-medium text-gray-700">
+              <div>
+                <label className="font-medium text-gray-700 mb-1 block">
                   Password
                 </label>
                 <input
@@ -182,22 +188,26 @@ export default function Navbar() {
                   placeholder="Password"
                   value={credentials.password}
                   onChange={(e) =>
-                    setCredentials({ ...credentials, password: e.target.value })
+                    setCredentials((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-400"
                 />
               </div>
             </div>
+
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowLoginModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition"
+                className="px-4 py-2 bg-gray-200 rounded-xl hover:bg-gray-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleLoginSubmit}
-                className="px-4 py-2 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow transition"
+                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-600"
               >
                 Login
               </button>
@@ -206,10 +216,10 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Success Popup */}
+      {/* Success / Error Popups */}
       {showSuccessPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center space-y-3 w-80">
+          <div className="bg-white rounded-xl shadow-lg px-6 py-4 flex flex-col items-center w-80">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500 text-white text-2xl">
               &#10003;
             </div>
@@ -219,11 +229,9 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
-      {/* Error Popup */}
       {showErrorPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg px-6 py-4 flex flex-col items-center space-y-3 w-80">
+          <div className="bg-white rounded-xl shadow-lg px-6 py-4 flex flex-col items-center w-80">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-500 text-white text-2xl">
               &#10005;
             </div>

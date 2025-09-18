@@ -9,3 +9,11 @@ body {
   overflow-x: hidden;
   box-sizing: border-box;
 }
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

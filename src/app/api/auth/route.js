@@ -1,0 +1,34 @@
+// app/api/auth/route.js
+import { NextResponse } from "next/server";
+
+export async function POST(request) {
+  try {
+    const { username, password } = await request.json();
+
+    // Server-side secrets from env (only available on server)
+    const ADMIN_USER = process.env.ADMIN_USER;
+    const ADMIN_PASS = process.env.ADMIN_PASS;
+
+    if (!ADMIN_USER || !ADMIN_PASS) {
+      return NextResponse.json(
+        { ok: false, message: "Server not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      // Simple success response; you could sign JWT here if you want
+      return NextResponse.json({ ok: true, token: "admin-authtoken" });
+    } else {
+      return NextResponse.json(
+        { ok: false, message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+  } catch (err) {
+    return NextResponse.json(
+      { ok: false, message: "Server error" },
+      { status: 500 }
+    );
+  }
+}

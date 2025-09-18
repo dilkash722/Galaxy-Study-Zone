@@ -107,7 +107,7 @@ export default function PaymentForm() {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center py-8 px-2 sm:px-4">
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-lg overflow-hidden mt-10">
+      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-lg overflow-hidden mt-14">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white text-center py-6">
           <h1 className="text-2xl font-bold">Galaxy Study Zone</h1>
