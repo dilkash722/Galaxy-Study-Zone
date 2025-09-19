@@ -162,7 +162,7 @@ export default function PaymentForm() {
                 name="paymentStatus"
                 value={formData.paymentStatus}
                 onChange={handleChange}
-                options={["Pending", "Paid", "Partial"]}
+                options={["Pending", "Paid", "Unpaid"]}
               />
               <InputField
                 label="Remarks"

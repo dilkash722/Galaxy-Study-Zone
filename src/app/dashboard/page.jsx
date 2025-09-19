@@ -66,21 +66,30 @@ export default function DashboardPage() {
 
   if (!selectedStudent) return <p className="p-6">Loading...</p>;
 
+  // Total Students
   const totalStudents = students.length;
-  const totalAmount = students.reduce(
-    (acc, s) => acc + (parseFloat(s.TuitionFees) || 0),
+
+  // All payments array
+  const allPayments = students.flatMap((s) => s.payments);
+
+  // Total Amount (sum of all payments)
+  const totalAmount = allPayments.reduce(
+    (acc, p) => acc + (parseFloat(p.Amount) || 0),
     0
   );
-  const totalCollection = students.reduce((acc, s) => {
-    let paid = 0;
-    s.payments.forEach((p) => {
-      if (p.PaymentStatus?.toLowerCase() === "paid")
-        paid += parseFloat(p.Amount || 0);
-    });
-    return acc + paid;
+
+  // Total Collection (only paid payments)
+  const totalCollection = allPayments.reduce((acc, p) => {
+    if (p.PaymentStatus?.toLowerCase() === "paid") {
+      return acc + (parseFloat(p.Amount) || 0);
+    }
+    return acc;
   }, 0);
+
+  // Total Due (amount - collection)
   const totalDue = totalAmount - totalCollection;
 
+  // Bar chart data: students count per class
   const barData = Object.entries(
     students.reduce((acc, s) => {
       acc[s.Class] = (acc[s.Class] || 0) + 1;
@@ -88,6 +97,7 @@ export default function DashboardPage() {
     }, {})
   ).map(([cls, count]) => ({ class: cls, students: count }));
 
+  // Pie chart for selected student
   const monthlyFee = parseFloat(selectedStudent.TuitionFees) || 0;
   let pieData = [];
   let totalUnpaid = 0;
@@ -103,6 +113,7 @@ export default function DashboardPage() {
   if (totalUnpaid > 0)
     pieData.push({ name: `Total Due - ₹${totalUnpaid}`, value: totalUnpaid });
 
+  // Search filter
   const filteredStudents = students.filter((s) =>
     s.StudentName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -110,7 +121,7 @@ export default function DashboardPage() {
   return (
     <div className="p-6 bg-gray-100 flex flex-col gap-6 mt-18 mb-6">
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* ✅ Left side student info (kam height + scrollbar hidden) */}
+        {/* Left side student list */}
         <div className="w-full lg:w-1/3 bg-white rounded-2xl shadow p-4 max-h-[445px] overflow-y-scroll [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <input
             type="text"
@@ -145,7 +156,7 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {/* ✅ Right side (Cards + Charts same as before) */}
+        {/* Right side: Cards + Charts */}
         <div className="flex-1 flex flex-col gap-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <CardSmall
@@ -213,7 +224,7 @@ export default function DashboardPage() {
   );
 }
 
-// ✅ Compact Card Component
+// Compact Card Component
 function CardSmall({ title, value, color }) {
   const colorMap = {
     blue: "text-blue-600",
